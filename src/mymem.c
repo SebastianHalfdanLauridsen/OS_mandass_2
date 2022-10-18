@@ -56,7 +56,7 @@ void initmem(strategies strategy, size_t sz)
 
 	if (myMemory != NULL) free(myMemory); /* in case this is not the first time initmem2 is called */
 
-	/* TODO: release any other memory you were using for bookkeeping when doing a re-initialization! */
+	//Release any other memory you were using for bookkeeping when doing a re-initialization!
 
     //check if there is at least one block allocated in memory
     if (head != NULL) 
@@ -73,7 +73,7 @@ void initmem(strategies strategy, size_t sz)
 
 	myMemory = malloc(sz);
 	
-	/* TODO: Initialize memory management structure. */
+	//Initialize memory management structure.
 
     //init first node of memory, from https://github.com/ArmandasRokas/dtu_notes/wiki/ass3_manual
     head = (struct memoryList*) malloc(sizeof (struct memoryList));
@@ -82,7 +82,6 @@ void initmem(strategies strategy, size_t sz)
     head->size = sz; // initialy the first block size is equals to the memory pool size. 
     head->alloc = 0;  // not allocated
     head->ptr = myMemory;  // points to the same memory adress as the memory pool
-
 }
 
 /* Allocate a block of memory with the requested size.
@@ -93,8 +92,9 @@ void initmem(strategies strategy, size_t sz)
 
 void *mymalloc(size_t requested)
 {   
+    //die if any evaluate to false
     assert(requested > 1 && "the amount of memory requested is too small");
-    assert(requested <= mySize && "the amount of memory requested is too large"); 
+    assert(requested <= mem_total && "the amount of memory requested is too large"); 
     assert(head != NULL && "the memory is uninitialized");
 
 	assert((int)myStrategy > 0);
@@ -131,18 +131,21 @@ void myfree(void* block)
 /* Get the number of contiguous areas of free space in memory. */
 int mem_holes()
 {
+    //TODO foreach block in memory, sum the bytes and return total
 	return 0;
 }
 
 /* Get the number of bytes allocated */
 int mem_allocated()
 {
+    //TODO foreach block in memory, sum the allocated bytes and return total
 	return 0;
 }
 
 /* Number of non-allocated bytes */
 int mem_free()
 {
+    //TODO foreach block in memory, sum the unallocated bytes and return total
 	return 0;
 }
 
@@ -155,6 +158,7 @@ int mem_largest_free()
 /* Number of free blocks smaller than "size" bytes. */
 int mem_small_free(int size)
 {
+    //TODO foreach block in memory, sum the amount of blocks smaller than *size* bytes and return count.
 	return 0;
 }       
 

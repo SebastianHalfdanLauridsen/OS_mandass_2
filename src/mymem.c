@@ -27,7 +27,7 @@ size_t mySize;
 void *myMemory = NULL;
 
 static struct memoryList *head;
-static struct memoryList *next;
+// static struct memoryList *next;
 struct memoryList *trav; // memory list traversal pointer
 
 /* initmem must be called prior to mymalloc and myfree.
@@ -116,6 +116,58 @@ void *mymalloc(size_t requested)
 /* Frees a block of memory previously allocated by mymalloc. */
 void myfree(void *block)
 {
+    // deallocate block
+    trav = head;
+    while (trav->ptr != block)
+    {
+        trav = trav->next;
+    }
+    trav->alloc = 0;
+
+    struct memoryList *b2 = trav;
+    struct memoryList *b1 = b2->last;
+    struct memoryList *b3 = b2->next;
+
+    //combine previous block
+    if ((b1 != NULL) && (b1->alloc == 0))
+    {
+        // combine sizes
+        b1->size += b2->size;
+
+        // link adjacent blocks
+        if (b3 != NULL)
+        {
+            b1->next = b3;
+            b3->last = b1;
+        }
+        else
+        {
+            b1->next = NULL;
+        }
+        
+    }
+
+    //combine next block
+    if ((b3 != NULL) && (b3->alloc == 0))
+    {
+        //combine sizes
+        b3->size += b2->size;
+
+        //move ptr
+        b3->ptr = b2->ptr;
+
+        //link adjacent blocks
+        if (b1 != NULL) {
+            b3->last = b1;
+            b1->next = b3;
+        } else
+        {
+            b3->last = NULL;
+            head = b3;
+        }
+    }
+
+    free(b2);
     return;
 }
 

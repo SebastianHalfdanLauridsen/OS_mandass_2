@@ -499,12 +499,12 @@ void print_memory_status()
  * implementations are called.  Run "mem -try <args>" to call this function.
  * We have given you a simple example to start.
  */
-void try_mymem(int argc, char *argv)
+void try_mymem(int argc, char **argv)
 {
     strategies strat;
     void *a, *b, *c, *d, *e;
     if (argc > 1)
-        strat = strategyFromString(argv);
+        strat = strategyFromString(argv[1]);
     else
         strat = First;
 
@@ -516,29 +516,11 @@ void try_mymem(int argc, char *argv)
     a = mymalloc(100);
     b = mymalloc(100);
     c = mymalloc(100);
-
-    print_memory();
-
     myfree(b);
-
-    print_memory();
-
     d = mymalloc(50);
-
-    print_memory();
-
     myfree(a);
-
     e = mymalloc(25);
 
     print_memory();
-
-    print_memory();
     print_memory_status();
-}
-
-int main()
-{
-    try_mymem(2, "best");
-    return 0;
 }

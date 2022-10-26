@@ -262,17 +262,17 @@ void myfree(void *block)
     // reduce to single block if next is free
     if (cont->next != head && !(cont->next->alloc))
     {
-        struct memoryList *second = cont->next;
-        cont->next = second->next;
+        struct memoryList *latter = cont->next;
+        cont->next = latter->next;
         cont->next->last = cont;
-        cont->size += second->size;
+        cont->size += latter->size;
 
-        if (next == second)
+        if (next == latter)
         {
             next = cont;
         }
 
-        free(second);
+        free(latter);
     }
 }
 
@@ -389,17 +389,17 @@ strategies strategyFromString(char *strategy)
 /* Use this function to print out the current contents of memory. */
 void print_memory()
 {
-    printf("Memory List {\n");
+    printf("Current memory: \n");
     /* Iterate over memory list */
-    struct memoryList *index = head;
+    struct memoryList *i = head;
     do
     {
-        printf("\tBlock %p,\tsize %d,\t%s\n",
-               index->ptr,
-               index->size,
-               (index->alloc ? "[ALLOCATED]" : "[FREE]"));
-    } while ((index = index->next) != head);
-    printf("}\n");
+        printf("\t%p,\tsize: %d,\t%s\n",
+               i->ptr,
+               i->size,
+               (i->alloc ? "[allocd]" : "[free]"));
+    } while ((i = i->next) != head);
+    printf("\n");
 }
 
 /* Use this function to track memory allocation performance.

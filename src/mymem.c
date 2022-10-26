@@ -157,14 +157,19 @@ void *mymalloc(size_t requested)
 struct memoryList *firstBlock(size_t requested)
 {
     // find block
-    struct memoryList *index = head;
-    do
+    struct memoryList *i = head;
+
+    if (!(i->alloc) && i->size >= requested)
     {
-        if (!(index->alloc) && index->size >= requested)
+        return i;
+    }
+    while ((i = i->next) != head)
+    {
+        if (!(i->alloc) && i->size >= requested)
         {
-            return index;
+            return i;
         }
-    } while ((index = index->next) != head);
+    }
 
     // no block
     return NULL;
@@ -174,14 +179,19 @@ struct memoryList *firstBlock(size_t requested)
 struct memoryList *bestBlock(size_t requested)
 {
     // find most optimally sized block
-    struct memoryList *index = head, *min = NULL;
-    do
+    struct memoryList *i = head, *min = NULL;
+
+    if (!(i->alloc) && (i->size >= requested) && (!min || i->size < min->size))
     {
-        if (!(index->alloc) && index->size >= requested && (!min || index->size < min->size))
+        min = i;
+    }
+    while ((i = i->next) != head)
+    {
+        if (!(i->alloc) && (i->size >= requested) && (!min || i->size < min->size))
         {
-            min = index;
+            min = i;
         }
-    } while ((index = index->next) != head);
+    }
 
     return min;
 }
@@ -191,13 +201,18 @@ struct memoryList *worstBlock(size_t requested)
 {
     // find biggest block
     struct memoryList *index = head, *max = NULL;
-    do
+
+    if (!(index->alloc) && (!max || index->size > max->size))
+    {
+        max = index;
+    }
+    while ((index = index->next) != head)
     {
         if (!(index->alloc) && (!max || index->size > max->size))
         {
             max = index;
         }
-    } while ((index = index->next) != head);
+    }
 
     // return found block if big enough
     if (max->size >= requested)
@@ -215,13 +230,18 @@ struct memoryList *nextBlock(size_t requested)
 {
     // find next big enough block
     struct memoryList *start = next;
-    do
+
+    if (!(next->alloc) && next->size >= requested)
+    {
+        return next;
+    }
+    while ((next = next->next) != start)
     {
         if (!(next->alloc) && next->size >= requested)
         {
             return next;
         }
-    } while ((next = next->next) != start);
+    }
 
     // no block
     return NULL;
@@ -232,13 +252,14 @@ void myfree(void *block)
 {
     // iterate over memory, find target block container
     struct memoryList *cont = head;
-    do
+
+    while ((cont = cont->next) != head)
     {
         if (cont->ptr == block)
         {
             break;
         }
-    } while ((cont = cont->next) != head);
+    }
 
     cont->alloc = 0;
 
@@ -260,7 +281,7 @@ void myfree(void *block)
     }
 
     // reduce to single block if next is free
-    if (cont->next != head && !(cont->next->alloc))
+    if ((cont->next != head) && !(cont->next->alloc))
     {
         struct memoryList *latter = cont->next;
         cont->next = latter->next;
@@ -285,40 +306,102 @@ void myfree(void *block)
 /* Get the number of contiguous areas of free space in memory. */
 int mem_holes()
 {
-    // TODO foreach block in memory, sum the unallocated spaces and return total
-    return 0;
+    int holes = mem_small_free(mySize + 1);
+    return holes;
 }
 
 /* Get the number of bytes allocated */
 int mem_allocated()
 {
-    // TODO foreach block in memory, sum the allocated bytes and return total
-    return 0;
+    int allocated = mySize - mem_free();
+    return allocated;
 }
 
 /* Number of non-allocated bytes */
 int mem_free()
 {
-    // TODO foreach block in memory, sum the unallocated bytes and return total
-    return 0;
+    int count = 0;
+
+    // loop over memory
+    struct memoryList *i = head;
+
+    // sum if block isn't allocated
+    if (i->alloc == 0)
+    {
+        count += i->size;
+    }
+    while ((i = i->next) != head)
+    {
+        if (i->alloc == 0)
+        {
+            count += i->size;
+        }
+    }
+
+    return count;
 }
 
 /* Number of bytes in the largest contiguous area of unallocated memory */
 int mem_largest_free()
 {
-    return 0;
+    int maxSize = 0;
+
+    struct memoryList *i = head;
+
+    // find bigger maxSize if not allocated and actually greater
+    if ((i->alloc == 0) && (i->size > maxSize))
+    {
+        maxSize = i->size;
+    }
+    while ((i = i->next) != head)
+    {
+        if ((i->alloc == 0) && (i->size > maxSize))
+        {
+            maxSize = i->size;
+        }
+    }
+
+    return maxSize;
 }
 
 /* Number of free blocks smaller than "size" bytes. */
 int mem_small_free(int size)
 {
-    // TODO foreach block in memory, sum the amount of blocks smaller than *size* bytes and return count.
-    return 0;
+    int count = 0;
+
+    struct memoryList *i = head;
+
+    // sum if this block is smaller
+    if (i->size <= size)
+    {
+        count += !(i->alloc);
+    }
+    while ((i = i->next) != head)
+    {
+        if (i->size <= size)
+        {
+            count += !(i->alloc);
+        }
+    }
+
+    return count;
 }
 
 char mem_is_alloc(void *ptr)
 {
-    return 0;
+    struct memoryList *i = head;
+    while (i->next != head)
+    {
+        // if the next block pointer is append target, this is the target block
+        if (ptr < i->next->ptr)
+        {
+            return i->alloc;
+        }
+        i = i->next;
+    }
+
+    // we are at the last block therefore target is here
+    return i->alloc;
 }
 
 /*
@@ -392,13 +475,12 @@ void print_memory()
     printf("Current memory: \n");
     /* Iterate over memory list */
     struct memoryList *i = head;
-    do
+
+    printf("\t%p,\tsize: %d,\t%s\n", i->ptr, i->size, (i->alloc ? "[allocd]" : "[free]"));
+    while ((i = i->next) != head)
     {
-        printf("\t%p,\tsize: %d,\t%s\n",
-               i->ptr,
-               i->size,
-               (i->alloc ? "[allocd]" : "[free]"));
-    } while ((i = i->next) != head);
+        printf("\t%p,\tsize: %d,\t%s\n", i->ptr, i->size, (i->alloc ? "[allocd]" : "[free]"));
+    }
     printf("\n");
 }
 
@@ -457,6 +539,6 @@ void try_mymem(int argc, char *argv)
 
 int main()
 {
-    try_mymem(2, "next");
+    try_mymem(2, "best");
     return 0;
 }
